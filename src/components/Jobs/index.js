@@ -43,6 +43,29 @@ const salaryRangesList = [
   },
 ]
 
+const locationsList = [
+  {
+    label: 'Hyderabad',
+    locationId: 'Hyderabad',
+  },
+  {
+    label: 'Bangalore',
+    locationId: 'Bangalore',
+  },
+  {
+    label: 'Chennai',
+    locationId: 'Chennai',
+  },
+  {
+    label: 'Delhi',
+    locationId: 'Delhi',
+  },
+  {
+    label: 'Mumbai',
+    locationId: 'Mumbai',
+  },
+]
+
 const apiStatusConstants = {
   initial: 'INITIAL',
   success: 'SUCCESS',
@@ -58,6 +81,7 @@ class Jobs extends Component {
     searchInput: '',
     activeSalaryRange: '',
     activeEmploymentTypes: [],
+    activeLocations: [],
   }
 
   componentDidMount() {
@@ -97,13 +121,15 @@ class Jobs extends Component {
       searchInput,
       activeSalaryRange,
       activeEmploymentTypes,
+      activeLocations,
     } = this.state
 
     const employmentType = activeEmploymentTypes.join(',')
+    const location = activeLocations.join(',')
 
     const jwtToken = Cookies.get('jwt_token')
 
-    const jobsApiUrl = `https://apis.ccbp.in/jobs?employment_type=${employmentType}&minimum_package=${activeSalaryRange}&search=${searchInput}`
+    const jobsApiUrl = `https://apis.ccbp.in/jobs?employment_type=${employmentType}&minimum_package=${activeSalaryRange}&search=${searchInput}&location=${location}`
 
     const options = {
       headers: {
@@ -144,10 +170,16 @@ class Jobs extends Component {
     if (event.target.checked) {
       this.setState(
         {
-          activeEmploymentTypes: [
-            ...activeEmploymentTypes,
-            event.target.id,
-          ],
+          activeEmploymentTypes: [...activeEmploymentTypes, event.target.id],
+        },
+        this.getJobs,
+      )
+    } else {
+      this.setState(
+        {
+          activeEmploymentTypes: activeEmploymentTypes.filter(
+            eachType => eachType !== event.target.id,
+          ),
         },
         this.getJobs,
       )
@@ -161,6 +193,28 @@ class Jobs extends Component {
       },
       this.getJobs,
     )
+  }
+
+  onChangeLocation = event => {
+    const {activeLocations} = this.state
+
+    if (event.target.checked) {
+      this.setState(
+        {
+          activeLocations: [...activeLocations, event.target.id],
+        },
+        this.getJobs,
+      )
+    } else {
+      this.setState(
+        {
+          activeLocations: activeLocations.filter(
+            eachLocation => eachLocation !== event.target.id,
+          ),
+        },
+        this.getJobs,
+      )
+    }
   }
 
   renderLoader = () => (
@@ -211,10 +265,7 @@ class Jobs extends Component {
         {jobsList.map(eachJob => (
           <li key={eachJob.id}>
             <Link to={`/jobs/${eachJob.id}`}>
-              <img
-                src={eachJob.company_logo_url}
-                alt="company logo"
-              />
+              <img src={eachJob.company_logo_url} alt="company logo" />
 
               <h1>{eachJob.title}</h1>
 
@@ -259,10 +310,7 @@ class Jobs extends Component {
 
     return (
       <div>
-        <img
-          src={profileData.profile_image_url}
-          alt="profile"
-        />
+        <img src={profileData.profile_image_url} alt="profile" />
 
         <h1>{profileData.name}</h1>
 
@@ -272,66 +320,96 @@ class Jobs extends Component {
   }
 
   render() {
+    const {
+      searchInput,
+      activeSalaryRange,
+      activeEmploymentTypes,
+      activeLocations,
+    } = this.state
+
     return (
       <>
         <Header />
 
-        <div>
-          {this.renderProfile()}
+        <div className="jobs-page">
+          <div className="jobs-sidebar">
+            {this.renderProfile()}
 
-          <input
-            type="search"
-            placeholder="Search"
-            value={this.state.searchInput}
-            onChange={this.changeSearchInput}
-          />
+            <input
+              type="search"
+              placeholder="Search"
+              value={searchInput}
+              onChange={this.changeSearchInput}
+            />
 
-          <button
-            type="button"
-            data-testid="searchButton"
-            onClick={this.onClickSearch}
-          >
-            Search
-          </button>
+            <button
+              type="button"
+              data-testid="searchButton"
+              onClick={this.onClickSearch}
+            >
+              Search
+            </button>
 
-          <h1>Type of Employment</h1>
+            <h1>Type of Employment</h1>
 
-          <ul>
-            {employmentTypesList.map(eachItem => (
-              <li key={eachItem.employmentTypeId}>
-                <input
-                  type="checkbox"
-                  id={eachItem.employmentTypeId}
-                  onChange={this.onChangeEmploymentType}
-                />
+            <ul>
+              {employmentTypesList.map(eachItem => (
+                <li key={eachItem.employmentTypeId}>
+                  <input
+                    type="checkbox"
+                    id={eachItem.employmentTypeId}
+                    checked={activeEmploymentTypes.includes(
+                      eachItem.employmentTypeId,
+                    )}
+                    onChange={this.onChangeEmploymentType}
+                  />
 
-                <label htmlFor={eachItem.employmentTypeId}>
-                  {eachItem.label}
-                </label>
-              </li>
-            ))}
-          </ul>
+                  <label htmlFor={eachItem.employmentTypeId}>
+                    {eachItem.label}
+                  </label>
+                </li>
+              ))}
+            </ul>
 
-          <h1>Salary Range</h1>
+            <h1>Salary Range</h1>
 
-          <ul>
-            {salaryRangesList.map(eachItem => (
-              <li key={eachItem.salaryRangeId}>
-                <input
-                  type="radio"
-                  id={eachItem.salaryRangeId}
-                  name="salary"
-                  onChange={this.onChangeSalaryRange}
-                />
+            <ul>
+              {salaryRangesList.map(eachItem => (
+                <li key={eachItem.salaryRangeId}>
+                  <input
+                    type="radio"
+                    id={eachItem.salaryRangeId}
+                    name="salary"
+                    checked={activeSalaryRange === eachItem.salaryRangeId}
+                    onChange={this.onChangeSalaryRange}
+                  />
 
-                <label htmlFor={eachItem.salaryRangeId}>
-                  {eachItem.label}
-                </label>
-              </li>
-            ))}
-          </ul>
+                  <label htmlFor={eachItem.salaryRangeId}>
+                    {eachItem.label}
+                  </label>
+                </li>
+              ))}
+            </ul>
 
-          {this.renderAllJobs()}
+            <h1>Location</h1>
+
+            <ul>
+              {locationsList.map(eachItem => (
+                <li key={eachItem.locationId}>
+                  <input
+                    type="checkbox"
+                    id={eachItem.locationId}
+                    checked={activeLocations.includes(eachItem.locationId)}
+                    onChange={this.onChangeLocation}
+                  />
+
+                  <label htmlFor={eachItem.locationId}>{eachItem.label}</label>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="jobs-list-container">{this.renderAllJobs()}</div>
         </div>
       </>
     )
